@@ -1,46 +1,39 @@
-import { Component } from 'react';
+import { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import PropTypes from 'prop-types';
 import { ModalContent, Overlay } from './Modal.styled';
 
 const modalRoot = document.querySelector('#modal-root');
 
-export class Modal extends Component {
-  static propTypes = {
-    onToggleModal: PropTypes.func.isRequired,
-  };
+export const Modal = ({ onToggleModal, children }) => {
+  useEffect(() => {
+    const hendleESC = e => {
+      if (e.code === 'Escape') {
+        onToggleModal();
+      }
+    };
 
-  componentDidMount() {
-    window.addEventListener('keydown', this.hendleESC);
-  }
+    window.addEventListener('keydown', hendleESC);
 
-  componentWillUnmount() {
-    window.removeEventListener('keydown', this.hendleESC);
-  }
+    return () => window.removeEventListener('keydown', hendleESC);
+  }, [onToggleModal]);
 
-  hendleESC = e => {
-    if (e.code === 'Escape') {
-      this.props.onToggleModal();
-    }
-  };
-
-  hendleBackdrop = e => {
+  const hendleBackdrop = e => {
     if (e.currentTarget === e.target) {
-      this.props.onToggleModal();
+      onToggleModal();
     }
   };
 
-  render() {
-    const { children } = this.props;
-    const closeModalBacdrop = this.hendleBackdrop;
+  return createPortal(
+    <>
+      <Overlay onClick={hendleBackdrop}>
+        <ModalContent>{children}</ModalContent>
+      </Overlay>
+    </>,
+    modalRoot
+  );
+};
 
-    return createPortal(
-      <>
-        <Overlay onClick={closeModalBacdrop}>
-          <ModalContent>{children}</ModalContent>
-        </Overlay>
-      </>,
-      modalRoot
-    );
-  }
-}
+Modal.propTypes = {
+  onToggleModal: PropTypes.func.isRequired,
+};
